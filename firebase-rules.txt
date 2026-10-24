@@ -1,0 +1,50 @@
+Tempel blok ini di dalam "rules": { ... } Realtime Database (di antara node lain). Kalau sebelumnya sudah ada blok "wawa": {...}, GANTI seluruh blok lama dengan ini, lalu Publish.
+Ganti email owner kalau berbeda (ada beberapa tempat: vanzzid15@gmail.com).
+
+"wawa": {
+  "ids": {".read":"auth!=null","$id":{".write":"auth!=null&&(!data.exists()||data.val()===auth.uid||auth.token.email==='vanzzid15@gmail.com')"}},
+  "users": {".read":"auth!=null","$uid":{
+    ".write":"(auth.uid===$uid&&!data.exists())||(auth.uid===$uid&&!newData.exists())||auth.token.email==='vanzzid15@gmail.com'",
+    "name":{".write":"auth.uid===$uid"},"year":{".write":"auth.uid===$uid"},"status":{".write":"auth.uid===$uid"},
+    "public":{".write":"auth.uid===$uid"},"storyOff":{".write":"auth.uid===$uid"},"showSeen":{".write":"auth.uid===$uid"},"lastSeen":{".write":"auth.uid===$uid"},"online":{".write":"auth.uid===$uid"},
+    "blue":{".validate":"auth.token.email==='vanzzid15@gmail.com'"},"mod":{".validate":"auth.token.email==='vanzzid15@gmail.com'"},"banned":{".validate":"auth.token.email==='vanzzid15@gmail.com'"},"title":{".validate":"auth.token.email==='vanzzid15@gmail.com'"}}},
+  "contacts": {"$uid":{".read":"auth.uid===$uid",".write":"auth!=null"}},
+
+  "msgs": {"$cid":{".read":"auth!=null&&$cid.contains(auth.uid)","$k":{".write":"auth!=null&&$cid.contains(auth.uid)&&(data.exists()||!root.child('wawa/blocks/'+$cid.replace(auth.uid,'').replace('_','')+'/'+auth.uid).exists())"}}},
+  "blocks": {"$u":{".read":"auth.uid===$u","$b":{".read":"auth!=null&&$b===auth.uid",".write":"auth.uid===$u"}}},
+  "dmf":  {"$cid":{".read":"auth!=null&&$cid.contains(auth.uid)",".write":"auth!=null&&$cid.contains(auth.uid)"}},
+  "typ":  {"$r":{".read":"auth!=null","$u":{".write":"auth.uid===$u"}}},
+
+  "groups":  {"$g":{".read":"data.child('members').child(auth.uid).exists()",
+    ".write":"auth!=null&&((!data.exists()&&newData.child('members').child(auth.uid).exists())||data.child('owner').val()===auth.uid)",
+    "members":{"$m":{".write":"auth!=null&&((auth.uid===$m&&data.exists()&&!newData.exists())||(!data.exists()&&newData.exists()&&root.child('wawa/groups/'+$g+'/members/'+auth.uid).exists())||(auth.uid===$m&&!data.exists()&&root.child('wawa/groups/'+$g+'/owner').exists()&&root.child('wawa/ginv/'+newData.val()+'/gid').val()===$g&&!root.child('wawa/ginv/'+newData.val()+'/used').exists()))"}}}},
+  "ginv": {"$code":{".read":"auth!=null",".write":"auth!=null&&(newData.exists()?root.child('wawa/groups/'+newData.child('gid').val()+'/owner').val()===auth.uid:root.child('wawa/groups/'+data.child('gid').val()+'/owner').val()===auth.uid)","used":{".write":"auth!=null&&!data.exists()"}}},
+  "ugroups": {"$u":{".read":"auth.uid===$u",".write":"auth!=null"}},
+  "gmsgs": {"$g":{".read":"root.child('wawa/groups/'+$g+'/members/'+auth.uid).exists()",".write":"root.child('wawa/groups/'+$g+'/members/'+auth.uid).exists()"}},
+  "gf":    {"$g":{".read":"root.child('wawa/groups/'+$g+'/members/'+auth.uid).exists()",".write":"root.child('wawa/groups/'+$g+'/members/'+auth.uid).exists()"}},
+
+  "channels": {".read":"auth!=null","$id":{
+    ".write":"auth!=null&&((!data.exists()&&newData.child('owner').val()===auth.uid)||data.child('owner').val()===auth.uid||auth.token.email==='vanzzid15@gmail.com')",
+    "followers":{"$u":{".write":"auth.uid===$u"}},
+    "admins":{"$u":{".validate":"newData.val()===true"}}}},
+  "chposts": {"$id":{".read":"auth!=null",".write":"auth!=null&&(root.child('wawa/channels/'+$id+'/owner').val()===auth.uid||root.child('wawa/channels/'+$id+'/admins/'+auth.uid).exists())"}},
+  "chf":     {"$id":{".read":"auth!=null",".write":"auth!=null&&(root.child('wawa/channels/'+$id+'/owner').val()===auth.uid||root.child('wawa/channels/'+$id+'/admins/'+auth.uid).exists())"}},
+
+  "pics": {"$u":{".read":"auth!=null&&(auth.uid===$u||root.child('wawa/users/'+$u+'/public').val()!==false||auth.token.email==='vanzzid15@gmail.com')",".write":"auth.uid===$u||auth.token.email==='vanzzid15@gmail.com'",
+    "photo":{".validate":"newData.isString()&&newData.val().length<100000"},"banner":{".validate":"newData.isString()&&newData.val().length<2400000"}}},
+  "chpics": {"$id":{".read":"auth!=null",".write":"auth!=null&&root.child('wawa/channels/'+$id+'/owner').val()===auth.uid","photo":{".validate":"newData.isString()&&newData.val().length<100000"}}},
+
+  "status":  {"$u":{".read":"auth!=null&&(auth.uid===$u||(root.child('wawa/users/'+$u+'/public').val()!==false&&root.child('wawa/users/'+$u+'/storyOff').val()!==true))",".write":"auth.uid===$u"}},
+  "statusf": {"$u":{".read":"auth!=null&&(auth.uid===$u||(root.child('wawa/users/'+$u+'/public').val()!==false&&root.child('wawa/users/'+$u+'/storyOff').val()!==true))",".write":"auth.uid===$u"}},
+
+  "react": {"$room":{".read":"auth!=null","$msg":{"$u":{".write":"auth!=null&&auth.uid===$u"}}}},
+  "chvotes": {"$ch":{".read":"auth!=null","$post":{"$u":{".write":"auth!=null&&auth.uid===$u"}}}},
+  "chreplies": {"$ch":{".read":"auth!=null","$post":{"$k":{".write":"auth!=null&&(!data.exists()?newData.child('u').val()===auth.uid:data.child('u').val()===auth.uid)"}}}},
+
+  "call": {"$id":{".read":"auth!=null",".write":"auth!=null"}},
+  "incoming": {"$uid":{".read":"auth.uid===$uid",".write":"auth!=null"}},
+  "calllog": {"$uid":{".read":"auth.uid===$uid",".write":"auth.uid===$uid"}},
+  "mlog": {".read":"auth.token.email==='vanzzid15@gmail.com'","$k":{".write":"auth!=null"}},
+  "config": {".read":"auth!=null",".write":"auth.token.email==='vanzzid15@gmail.com'"},
+  "broadcast": {".read":"auth!=null",".write":"auth.token.email==='vanzzid15@gmail.com'"}
+},

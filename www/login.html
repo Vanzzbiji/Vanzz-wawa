@@ -1,0 +1,48 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@700&display=swap"><link rel="stylesheet" href="style.css"><title>Login - Vanzz Wawa</title></head><body><div class="wrap">
+<img class="logo big" alt="Vanzz Wawa" src="https://files.catbox.moe/pzpldd.png">
+<div class="box"><div class="tabs"><button id="tl" class="on">Masuk</button><button id="tr">Daftar</button></div>
+<div class="err" id="err"></div>
+<div id="fr" class="hide"><label>Nama Lengkap</label><input id="nm"><label>Tahun Lahir</label><input id="yr" type="number" placeholder="2005"></div>
+<label>Email</label><input id="em" type="email"><label id="pl">Password</label><input id="pw" type="password">
+<div id="fr2" class="hide chk"><input type="checkbox" id="ok"><span>Saya setuju dengan <a href="legal.html">Syarat Penggunaan</a> dan <a href="legal.html">Kebijakan Privasi</a>.</span></div>
+<button class="btn p" id="go" style="margin-top:16px">Masuk</button><a href="#" id="lp" style="color:var(--mut)">Lupa password?</a></div>
+<p class="foot"><a href="index.html" style="color:var(--mut)">Kembali</a></p><p class="foot"><a href="legal.html">Syarat</a> · <a href="legal.html">Privasi</a></p></div>
+<div class="splash hide" id="splash"><img src="https://files.catbox.moe/pzpldd.png" alt=""></div><script type="module">
+import{auth,db}from"./firebase.js";
+import{createUserWithEmailAndPassword as C,signInWithEmailAndPassword as S,sendPasswordResetEmail as R,signOut,onAuthStateChanged as O}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{ref,get,set}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const $=i=>document.getElementById(i),P=p=>ref(db,"wawa/"+p);let reg=false,busy=false;const NX=(()=>{const n=new URLSearchParams(location.search).get("next");return n&&/^[\w.\-]+(\?[\w=&.\-]*)?$/.test(n)?n:"dashboard.html"})();const go2=()=>{$("splash").classList.remove("hide");setTimeout(()=>location.href=NX,1300)};
+O(auth,u=>{if(u&&!reg&&!busy)go2()});
+function mode(r){reg=r;$("tl").className=r?"":"on";$("tr").className=r?"on":"";$("fr").classList.toggle("hide",!r);$("fr2").classList.toggle("hide",!r);$("go").textContent=r?"Buat akun":"Masuk";$("pl").textContent=r?"Password (min. 8 karakter)":"Password";$("lp").classList.toggle("hide",r);$("err").textContent=""}
+$("tl").onclick=()=>mode(false);$("tr").onclick=()=>mode(true);
+const msg=c=>({"auth/invalid-credential":"Email atau password salah.","auth/email-already-in-use":"Email sudah terdaftar.","auth/weak-password":"Password terlalu lemah.","auth/invalid-email":"Format email tidak valid.","auth/too-many-requests":"Terlalu banyak percobaan. Coba lagi nanti.","auth/missing-email":"Isi email dulu."}[c]||"Terjadi kesalahan: "+c);
+const CU={url:location.origin+"/login.html",handleCodeInApp:false};
+let rcd=0;
+$("lp").onclick=async e=>{e.preventDefault();const er=$("err"),em=$("em").value.trim();er.style.color="";
+if(!em)return er.textContent="Isi email dulu di kolom Email.";
+if(Date.now()<rcd)return er.textContent="Tunggu "+Math.ceil((rcd-Date.now())/1000)+" detik sebelum kirim ulang.";
+$("lp").style.pointerEvents="none";er.style.color="#8a8aa0";er.textContent="Mengirim...";
+try{try{await R(auth,em,CU)}catch(x){if(x.code==="auth/unauthorized-continue-uri"||x.code==="auth/invalid-continue-uri")await R(auth,em);else throw x}
+rcd=Date.now()+60000;er.style.color="#4ade80";er.textContent="Link reset dikirim ke "+em+". Cek Kotak Masuk dan folder Spam (bisa butuh 1-2 menit). Link hanya bisa dipakai sekali."}
+catch(x){er.style.color="";er.textContent=x.code==="auth/user-not-found"?"Email ini belum terdaftar.":msg(x.code)}
+finally{$("lp").style.pointerEvents=""}};
+async function newId(){for(;;){const id=String(Math.floor(1e7+Math.random()*9e7));if(!(await get(P("ids/"+id))).exists())return id}}
+/* cek email beneran: format, bukan email sekali pakai, domain punya server email (DNS). Tanpa verifikasi link */
+const BAD=new Set("mailinator.com guerrillamail.com guerrillamail.net guerrillamail.org guerrillamail.biz sharklasers.com grr.la 10minutemail.com 10minutemail.net tempmail.com temp-mail.org temp-mail.io tempmail.net tempail.com yopmail.com yopmail.net trashmail.com trashmail.net getnada.com nada.email dispostable.com maildrop.cc throwawaymail.com fakeinbox.com mohmal.com emailondeck.com mailnesia.com mintemail.com spamgourmet.com burnermail.io discard.email tempinbox.com moakt.com 1secmail.com 1secmail.net mail.tm tmpmail.org tmpmail.net fakemail.net mytemp.email tempr.email emailfake.com mailcatch.com spambox.us gmailnator.com".split(" "));
+async function realEmail(em){if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em))throw{code:"Format email tidak valid."};
+const d=em.split("@")[1].toLowerCase();if(BAD.has(d))throw{code:"Email sementara tidak diterima. Pakai email aktif milikmu sendiri."};
+try{for(const t of["MX","A"]){const j=await(await fetch("https://dns.google/resolve?name="+encodeURIComponent(d)+"&type="+t)).json();if(j.Answer&&j.Answer.length)return}throw 0}
+catch(x){if(x===0)throw{code:"Domain email "+d+" tidak ditemukan. Pakai email yang benar-benar ada."}}}
+$("go").onclick=async()=>{const e=$("err");e.style.color="";e.textContent="";const em=$("em").value.trim(),pw=$("pw").value;busy=true;
+try{if(!reg){const c=await S(auth,em,pw);
+go2();return}
+const nm=$("nm").value.trim(),yr=+$("yr").value;
+if(!nm)throw{code:"Nama wajib diisi."};if(yr<1940||yr>new Date().getFullYear()-5)throw{code:"Tahun lahir tidak valid."};
+if(pw.length<8)throw{code:"Password minimal 8 karakter."};if(!$("ok").checked)throw{code:"Centang persetujuan dulu."};
+await realEmail(em);
+const c=await C(auth,em,pw),id=await newId();
+await set(P("ids/"+id),c.user.uid);
+await set(P("users/"+c.user.uid),{uid:c.user.uid,id,name:nm,year:yr,email:em,status:"",public:true,createdAt:Date.now()});
+busy=false;go2()
+}catch(x){busy=false;e.textContent=x.code&&/^auth\//.test(x.code)?msg(x.code):(x.code||x.message)}};
+</script></body></html>

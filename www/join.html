@@ -1,0 +1,24 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@700&display=swap"><link rel="stylesheet" href="style.css"><title>Gabung grup - Vanzz Wawa</title></head><body><div class="wrap">
+<img class="logo" alt="Vanzz Wawa" src="https://files.catbox.moe/pzpldd.png">
+<h1 id="t">Memeriksa tautan...</h1><p class="sub" id="s"></p>
+<div class="err" id="e"></div>
+<button class="btn p hide" id="go">Gabung grup</button>
+<a class="btn" href="dashboard.html">Ke beranda</a></div>
+<script type="module">
+import{auth,db}from"./firebase.js";
+import{onAuthStateChanged as O}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{ref,get,update,push}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const $=i=>document.getElementById(i),P=p=>ref(db,"wawa/"+p),code=new URLSearchParams(location.search).get("c")||"";
+const say=(t,s)=>{$("t").textContent=t;$("s").textContent=s||""};
+O(auth,async u=>{
+if(!/^[A-Za-z0-9]{10,40}$/.test(code))return say("Tautan tidak valid","Minta tautan baru dari pembuat grup.");
+if(!u){location.replace("login.html?next="+encodeURIComponent("join.html?c="+code));return}
+let inv=null;try{inv=(await get(P("ginv/"+code))).val()}catch(e){}
+if(!inv)return say("Tautan tidak berlaku","Tautan ini sudah diatur ulang, dibubarkan, atau salah. Minta tautan baru.");
+if(inv.used&&inv.used!==u.uid)return say("Tautan sudah dipakai","Tautan sekali pakai ini sudah dipakai orang lain. Minta tautan baru.");
+try{const m=(await get(P("groups/"+inv.gid+"/members/"+u.uid))).val();if(m){location.replace("dashboard.html?g="+inv.gid);return}}catch(e){}
+say("Gabung ke grup "+inv.name+"?","Kamu diundang lewat tautan grup.");$("go").classList.remove("hide");
+$("go").onclick=async()=>{$("go").disabled=true;$("e").textContent="";
+const up={};up["groups/"+inv.gid+"/members/"+u.uid]=code;up["ugroups/"+u.uid+"/"+inv.gid]={name:inv.name,gid:inv.gid,lt:Date.now(),last:"Kamu bergabung lewat tautan"};if(inv.once)up["ginv/"+code+"/used"]=u.uid;
+try{await update(ref(db,"wawa"),up);try{const nm=((await get(P("users/"+u.uid))).val()||{}).name||"Seseorang";await push(P("gmsgs/"+inv.gid),{sys:1,tx:nm+" bergabung",t:Date.now()})}catch(e){}location.replace("dashboard.html?g="+inv.gid)}catch(x){$("go").disabled=false;$("e").textContent="Gagal bergabung. Tautan mungkin sudah dipakai atau tidak berlaku. ("+(x.code||x.message)+")"}}});
+</script></body></html>

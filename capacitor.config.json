@@ -1,0 +1,8 @@
+{
+  "appId": "com.vanzz.wawa",
+  "appName": "Vanzz Wawa",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
